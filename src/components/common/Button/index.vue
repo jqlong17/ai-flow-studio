@@ -51,17 +51,45 @@ const handleClick = async () => {
       )
       
       if (sourceComponent) {
-        // 获取组件的内容
-        const content = sourceComponent.props.content || sourceComponent.props.value || ''
-        inputs[input.key] = content
+        // 获取组件的值（根据组件类型获取不同的属性）
+        let value = ''
+        switch (sourceComponent.type) {
+          case 'input':
+          case 'textarea':
+            value = sourceComponent.props.value || ''
+            break
+          case 'text-display':
+            value = sourceComponent.props.content || ''
+            break
+          case 'select':
+          case 'radio-group':
+          case 'checkbox-group':
+            value = sourceComponent.props.value || ''
+            break
+          default:
+            value = sourceComponent.props.value || sourceComponent.props.content || ''
+        }
+        
+        // 如果值是数组，转换为字符串
+        if (Array.isArray(value)) {
+          value = value.join(', ')
+        }
+        
+        inputs[input.key] = value
       }
     }
 
     console.log('工作流输入:', inputs)
 
+    // 从输入框获取查询文本
+    const queryInput = canvasStore.components.find(
+      comp => comp.type === 'input' && comp.props.variableName === 'query'
+    )
+    const query = queryInput?.props.value || "请根据输入生成内容"
+
     // 调用 Dify API
-    const baseUrl = import.meta.env.VITE_DIFY_BASE_URL || 'https://api.dify.ai/v1'
-    const apiKey = import.meta.env.VITE_DIFY_API_KEY || 'app-hdrNjAynLMRX93aP7ykyAUT0'
+    const baseUrl = import.meta.env.DIFY_BASE_URL || 'https://api.dify.ai/v1'
+    const apiKey = props.workflowId
 
     const response = await fetch(`${baseUrl}/chat-messages`, {
       method: 'POST',
@@ -71,7 +99,7 @@ const handleClick = async () => {
       },
       body: JSON.stringify({
         inputs,
-        query: "请根据输入生成内容",
+        query,
         response_mode: "blocking",
         user: "system"
       })
@@ -83,6 +111,7 @@ const handleClick = async () => {
     }
     
     const result = await response.json()
+    console.log('API 响应:', result) // 添加调试日志
     
     // 查找目标文本显示组件
     const textDisplayComponents = canvasStore.components.filter(

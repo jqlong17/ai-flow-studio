@@ -18,7 +18,7 @@ const promptInputRef = ref<{
 interface ConfigItem {
   key: string
   label: string
-  type: 'input' | 'select' | 'switch' | 'textarea' | 'options' | 'number' | 'tree-data' | 'input-group' | 'prompt-input' | 'workflow-inputs'
+  type: 'input' | 'select' | 'switch' | 'textarea' | 'options' | 'number' | 'tree-data' | 'input-group' | 'prompt-input' | 'workflow-inputs' | 'workflow-config'
   options?: { label: string; value: string | number }[]
   min?: number
   max?: number
@@ -78,21 +78,30 @@ const componentVariableTypes = {
 
 // 工作流选项
 const workflowOptions = ref([
-  { label: '测试工作流', value: 'app-hdrNjAynLMRX93aP7ykyAUT0' }
+  { 
+    label: import.meta.env.WORKFLOW_1_NAME || '教学设计工作流', 
+    value: import.meta.env.WORKFLOW_1_KEY
+  },
+  {
+    label: import.meta.env.WORKFLOW_2_NAME || '通用工作流',
+    value: import.meta.env.WORKFLOW_2_KEY
+  }
 ])
 
 // 获取工作流列表
 const fetchWorkflows = async () => {
   try {
-    // 这里可以调用 Dify API 获取工作流列表
-    // 或者从环境变量中读取预配置的工作流
-    const workflows = [
-      { label: '测试工作流', value: 'app-hdrNjAynLMRX93aP7ykyAUT0' },
-      { label: '教学设计工作流', value: 'app-teaching-design' },
-      { label: '知识点生成工作流', value: 'app-knowledge-points' },
-      { label: '练习题生成工作流', value: 'app-exercise-generator' }
+    // 使用环境变量中配置的工作流
+    workflowOptions.value = [
+      { 
+        label: import.meta.env.WORKFLOW_1_NAME || '教学设计工作流', 
+        value: import.meta.env.WORKFLOW_1_KEY
+      },
+      {
+        label: import.meta.env.WORKFLOW_2_NAME || '通用工作流',
+        value: import.meta.env.WORKFLOW_2_KEY
+      }
     ]
-    workflowOptions.value = workflows
   } catch (err) {
     console.error('获取工作流列表失败:', err)
     message.error('获取工作流列表失败')
@@ -330,16 +339,10 @@ const configMap: Record<string, ConfigItem[]> = {
       step: 10
     },
     {
-      key: 'workflowId',
-      label: '触发工作流',
-      type: 'select',
-      options: workflowOptions
-    },
-    {
-      key: 'workflowInputs',
-      label: '工作流输入',
-      type: 'workflow-inputs',
-      description: '配置要传递给工作流的输入变量'
+      key: 'workflowConfig',
+      label: '工作流配置',
+      type: 'workflow-config',
+      description: '配置按钮触发的工作流及其输入'
     }
   ]
 }
@@ -455,6 +458,38 @@ onMounted(() => {
                 </div>
               </div>
             </template>
+            <template v-else-if="config.type === 'workflow-config'">
+              <div class="workflow-config">
+                <Form.Item label="选择工作流" :colon="false">
+                  <Select
+                    v-model:value="canvasStore.selectedComponent.props.workflowId"
+                    :options="workflowOptions"
+                    placeholder="请选择工作流"
+                    style="width: 100%"
+                    @change="(value) => handleConfigChange('workflowId', value)"
+                  >
+                    <template #option="{ label, value, description }">
+                      <div class="workflow-option">
+                        <span>{{ label }}</span>
+                        <span v-if="description" class="workflow-description">{{ description }}</span>
+                      </div>
+                    </template>
+                  </Select>
+                </Form.Item>
+                
+                <Form.Item 
+                  label="工作流输入" 
+                  :colon="false"
+                  v-if="canvasStore.selectedComponent.props.workflowId"
+                >
+                  <WorkflowInputs
+                    v-model:value="canvasStore.selectedComponent.props.workflowInputs"
+                    :exclude-id="canvasStore.selectedComponent.id"
+                    @update:value="(value) => handleConfigChange('workflowInputs', value)"
+                  />
+                </Form.Item>
+              </div>
+            </template>
           </Form.Item>
           
           <Form.Item>
@@ -508,6 +543,36 @@ onMounted(() => {
       margin-top: 8px;
       display: flex;
       gap: 8px;
+    }
+  }
+
+  .workflow-config {
+    :deep(.ant-form-item) {
+      margin-bottom: 12px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .ant-form-item-label {
+        padding-bottom: 4px;
+        
+        label {
+          color: #666;
+          font-size: 13px;
+        }
+      }
+    }
+    
+    .workflow-option {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      
+      .workflow-description {
+        font-size: 12px;
+        color: #999;
+      }
     }
   }
 }

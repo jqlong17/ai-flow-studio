@@ -6,18 +6,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 从环境变量获取 Dify API 配置
-API_KEY = os.getenv('DIFY_API_KEY')
+WORKFLOW_1_KEY = os.getenv('WORKFLOW_1_KEY')
+WORKFLOW_2_KEY = os.getenv('WORKFLOW_2_KEY')
 BASE_URL = os.getenv('DIFY_BASE_URL')
 
 # 验证环境变量是否存在
-if not API_KEY or not BASE_URL:
-    raise ValueError("请确保设置了 DIFY_API_KEY 和 DIFY_BASE_URL 环境变量")
+if not WORKFLOW_1_KEY or not WORKFLOW_2_KEY or not BASE_URL:
+    raise ValueError("请确保设置了 WORKFLOW_1_KEY、WORKFLOW_2_KEY 和 DIFY_BASE_URL 环境变量")
 
-def test_dify_chat():
+def test_dify_chat(workflow_key=WORKFLOW_1_KEY):
     """测试 Dify 的聊天接口"""
     
     headers = {
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {workflow_key}",
         "Content-Type": "application/json"
     }
     
@@ -32,7 +33,7 @@ def test_dify_chat():
     
     print(f"使用的 API 配置：")
     print(f"BASE_URL: {BASE_URL}")
-    print(f"API_KEY: {API_KEY[:8]}..." if API_KEY else "API_KEY: 未设置")
+    print(f"WORKFLOW_KEY: {workflow_key[:8]}..." if workflow_key else "WORKFLOW_KEY: 未设置")
     print("\n开始发送请求...\n")
     
     # 发送请求
@@ -58,4 +59,8 @@ def test_dify_chat():
 
 if __name__ == "__main__":
     print("开始测试 Dify API...")
-    test_dify_chat() 
+    print("\n测试工作流 1 (教学设计)...")
+    test_dify_chat(WORKFLOW_1_KEY)
+    
+    print("\n测试工作流 2 (通用工作流)...")
+    test_dify_chat(WORKFLOW_2_KEY) 

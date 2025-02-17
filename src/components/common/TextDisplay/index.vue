@@ -75,7 +75,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   id: '',
   title: '文本显示',
-  defaultWorkflow: 'app-hdrNjAynLMRX93aP7ykyAUT0',
+  defaultWorkflow: '',  // 默认不绑定工作流
   prompt: '请生成内容',
   placeholder: '请选择工作流以显示内容',
   showWorkflowSelect: true,
@@ -107,8 +107,12 @@ const content = ref('')
 const selectedWorkflow = ref(props.defaultWorkflow)
 const workflowOptions = ref<SelectProps['options']>([
   {
-    label: '测试工作流',
-    value: 'app-hdrNjAynLMRX93aP7ykyAUT0'
+    label: import.meta.env.WORKFLOW_1_NAME || '教学设计工作流',
+    value: import.meta.env.WORKFLOW_1_KEY
+  },
+  {
+    label: import.meta.env.WORKFLOW_2_NAME || '通用工作流',
+    value: import.meta.env.WORKFLOW_2_KEY
   }
 ])
 
@@ -144,10 +148,10 @@ const fetchWorkflowContent = async (customInputs?: Record<string, string>) => {
   error.value = ''
   
   try {
-    const response = await fetch(`${import.meta.env.VITE_DIFY_BASE_URL}/chat-messages`, {
+    const response = await fetch(`${import.meta.env.DIFY_BASE_URL}/chat-messages`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_DIFY_API_KEY}`,
+        'Authorization': `Bearer ${selectedWorkflow.value}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
