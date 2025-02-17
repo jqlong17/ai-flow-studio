@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { 
   Card, 
   Input, 
-  Button, 
   Select, 
   Radio,
   Checkbox,
@@ -20,6 +19,9 @@ import LearningObjective from '../education/LearningObjective.vue'
 import FeedbackForm from '../education/FeedbackForm.vue'
 // 导入通用组件
 import TextDisplay from '../common/Text/TextDisplay.vue'
+import CascadeForm from '../common/CascadeForm/index.vue'
+import AICompletion from '../common/AICompletion/index.vue'
+import Button from '../common/Button/index.vue'
 
 const { TextArea } = Input
 
@@ -107,9 +109,23 @@ const handleMouseUp = () => {
 
 // 处理组件属性更新
 const handlePropUpdate = (componentId: string, propName: string, value: any) => {
+  const component = canvasStore.components.find(c => c.id === componentId)
+  if (!component) return
+  
+  // 处理树形数据的特殊情况
+  if (propName === 'items' && Array.isArray(value)) {
+    canvasStore.updateComponent(componentId, {
+      props: {
+        ...component.props,
+        items: value
+      }
+    })
+    return
+  }
+  
   canvasStore.updateComponent(componentId, {
     props: {
-      ...canvasStore.components.find(c => c.id === componentId)?.props,
+      ...component.props,
       [propName]: value
     }
   })
@@ -123,7 +139,7 @@ const componentMap: Record<string, Component> = {
   select: Select,
   'radio-group': Radio.Group,
   'checkbox-group': Checkbox.Group,
-  'ai-completion': Input,
+  'ai-completion': AICompletion,
   'ai-qa': Input,
   'ai-generator': TextArea,
   'knowledge-point': KnowledgePoint,
@@ -131,7 +147,8 @@ const componentMap: Record<string, Component> = {
   'explanation': Explanation,
   'learning-objective': LearningObjective,
   'feedback-form': FeedbackForm,
-  'text-display': TextDisplay
+  'text-display': TextDisplay,
+  'cascade-form': CascadeForm
 }
 </script>
 
@@ -165,6 +182,7 @@ const componentMap: Record<string, Component> = {
               v-bind="component.props"
               @update:content="(value) => handlePropUpdate(component.id, 'content', value)"
               @update:fontSize="(value) => handlePropUpdate(component.id, 'fontSize', value)"
+              @update:width="(value) => handlePropUpdate(component.id, 'width', value)"
             />
           </div>
         </template>

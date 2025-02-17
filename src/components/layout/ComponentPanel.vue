@@ -16,6 +16,18 @@ const components = [
     title: '基础组件',
     items: [
       { 
+        name: '级联表单', 
+        type: 'cascade-form',
+        icon: 'form',
+        defaultProps: {
+          items: [],
+          maxLevel: 3,
+          canAdd: true,
+          canDelete: true,
+          multiple: false
+        }
+      },
+      { 
         name: '文本显示', 
         type: 'text-display',
         icon: 'font-size',

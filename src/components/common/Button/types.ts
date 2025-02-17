@@ -5,6 +5,8 @@ export interface ButtonProps {
   disabled?: boolean
   icon?: string
   children?: string
+  width?: number
+  workflowId?: string
 }
 
 export interface IconButtonProps extends Omit<ButtonProps, 'icon'> {

@@ -1,23 +1,130 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Card, Empty, Form, Input, Select, Button, Space, InputNumber } from 'ant-design-vue'
+import { Card, Empty, Form, Input, Select, Button, Space, InputNumber, Switch, Tooltip } from 'ant-design-vue'
+import type { TextArea } from 'ant-design-vue/es/input'
 import { useCanvasStore } from '@/stores/canvas'
+import TreeDataEditor from '../common/TreeDataEditor/index.vue'
+import VariableSelect from '../common/VariableSelect/index.vue'
+import { mockWorkflows } from '@/types/workflow'
 
 const canvasStore = useCanvasStore()
+const promptInputRef = ref<{
+  resizableTextArea?: {
+    textArea: HTMLTextAreaElement
+  }
+} | null>(null)
 
 interface ConfigItem {
   key: string
   label: string
-  type: 'input' | 'select' | 'switch' | 'textarea' | 'options' | 'number'
+  type: 'input' | 'select' | 'switch' | 'textarea' | 'options' | 'number' | 'tree-data' | 'input-group' | 'prompt-input'
   options?: { label: string; value: string | number }[]
   min?: number
   max?: number
   step?: number
+  treeConfig?: {
+    titleField: string
+    valueField: string
+    childrenField: string
+  }
+  suffix?: string
+  description?: string
 }
+
+// 组件变量类型定义
+const componentVariableTypes = {
+  'cascade-form': {
+    type: '{ labels: string[], values: string[], paths: string[][] }',
+    description: '级联选择的结果对象，包含标签数组、值数组和完整路径'
+  },
+  'text-display': {
+    type: 'string',
+    description: '文本内容'
+  },
+  'input': {
+    type: 'string',
+    description: '输入值'
+  },
+  'textarea': {
+    type: 'string',
+    description: '多行文本输入值'
+  },
+  'select': {
+    type: 'string | string[]',
+    description: '选中项的值（多选时为数组）'
+  },
+  'radio-group': {
+    type: 'string',
+    description: '选中项的值'
+  },
+  'checkbox-group': {
+    type: 'string[]',
+    description: '选中项的值数组'
+  },
+  'ai-completion': {
+    type: 'string',
+    description: 'AI补全的结果文本'
+  },
+  'ai-qa': {
+    type: 'string',
+    description: 'AI问答的回答文本'
+  },
+  'ai-generator': {
+    type: 'string',
+    description: 'AI生成的内容'
+  }
+} as const
 
 // 不同类型组件的配置项
 const configMap: Record<string, ConfigItem[]> = {
+  'cascade-form': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['cascade-form'].type
+    },
+    {
+      key: 'items',
+      label: '级联数据',
+      type: 'tree-data',
+      treeConfig: {
+        titleField: 'label',
+        valueField: 'value',
+        childrenField: 'children'
+      }
+    },
+    {
+      key: 'maxLevel',
+      label: '最大层级',
+      type: 'number',
+      min: 1,
+      max: 5,
+      step: 1
+    },
+    {
+      key: 'multiple',
+      label: '允许多选',
+      type: 'switch'
+    },
+    {
+      key: 'canAdd',
+      label: '允许添加',
+      type: 'switch'
+    },
+    {
+      key: 'canDelete',
+      label: '允许删除',
+      type: 'switch'
+    }
+  ],
   'text-display': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['text-display'].type
+    },
     { 
       key: 'content', 
       label: '文本内容', 
@@ -52,12 +159,99 @@ const configMap: Record<string, ConfigItem[]> = {
       ]
     }
   ],
-  input: [
+  'input': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['input'].type
+    },
     { key: 'placeholder', label: '占位提示', type: 'input' },
     { key: 'allowClear', label: '允许清除', type: 'switch' }
   ],
-  button: [
-    { key: 'children', label: '按钮文本', type: 'input' },
+  'textarea': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['textarea'].type
+    },
+    { key: 'placeholder', label: '占位提示', type: 'input' },
+    { key: 'rows', label: '行数', type: 'number', min: 2, max: 10, step: 1 }
+  ],
+  'select': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['select'].type
+    },
+    { key: 'placeholder', label: '占位提示', type: 'input' },
+    { key: 'options', label: '选项', type: 'options' }
+  ],
+  'radio-group': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['radio-group'].type
+    },
+    { key: 'options', label: '选项', type: 'options' }
+  ],
+  'checkbox-group': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['checkbox-group'].type
+    },
+    { key: 'options', label: '选项', type: 'options' }
+  ],
+  'ai-completion': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['ai-completion'].type
+    },
+    { 
+      key: 'defaultContent', 
+      label: '默认内容', 
+      type: 'textarea' 
+    },
+    { 
+      key: 'prompt', 
+      label: '提示词', 
+      type: 'prompt-input',
+      description: '可以使用 {{变量名}} 引用其他组件的值'
+    }
+  ],
+  'ai-qa': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['ai-qa'].type
+    },
+    { key: 'placeholder', label: '占位提示', type: 'input' },
+    { key: 'context', label: '上下文', type: 'textarea' }
+  ],
+  'ai-generator': [
+    {
+      key: 'variableName',
+      label: '变量名',
+      type: 'input-group',
+      suffix: componentVariableTypes['ai-generator'].type
+    },
+    { key: 'type', label: '生成类型', type: 'input' },
+    { key: 'prompt', label: '提示词', type: 'textarea' }
+  ],
+  'button': [
+    { 
+      key: 'children', 
+      label: '按钮文字', 
+      type: 'input' 
+    },
     { 
       key: 'type', 
       label: '按钮类型', 
@@ -69,23 +263,34 @@ const configMap: Record<string, ConfigItem[]> = {
         { label: '文本按钮', value: 'text' },
         { label: '链接按钮', value: 'link' }
       ]
+    },
+    { 
+      key: 'size', 
+      label: '按钮大小', 
+      type: 'select',
+      options: [
+        { label: '大', value: 'large' },
+        { label: '中', value: 'middle' },
+        { label: '小', value: 'small' }
+      ]
+    },
+    {
+      key: 'width',
+      label: '按钮宽度',
+      type: 'number',
+      min: 80,
+      max: 500,
+      step: 10
+    },
+    {
+      key: 'workflowId',
+      label: '触发工作流',
+      type: 'select',
+      options: mockWorkflows.map(flow => ({
+        label: flow.name,
+        value: flow.id
+      }))
     }
-  ],
-  select: [
-    { key: 'placeholder', label: '占位提示', type: 'input' },
-    { key: 'options', label: '选项', type: 'options' }
-  ],
-  'ai-completion': [
-    { key: 'placeholder', label: '占位提示', type: 'input' },
-    { key: 'model', label: '模型', type: 'input' }
-  ],
-  'ai-qa': [
-    { key: 'placeholder', label: '占位提示', type: 'input' },
-    { key: 'context', label: '上下文', type: 'textarea' }
-  ],
-  'ai-generator': [
-    { key: 'type', label: '生成类型', type: 'input' },
-    { key: 'prompt', label: '提示词', type: 'textarea' }
   ]
 }
 
@@ -121,8 +326,19 @@ const handleDeleteComponent = () => {
             :key="config.key"
             :label="config.label"
           >
+            <template v-if="config.type === 'input-group'">
+              <div class="variable-input-group">
+                <Input 
+                  v-model:value="canvasStore.selectedComponent.props[config.key]"
+                  @change="(e) => handleConfigChange(config.key, e.target.value)"
+                />
+                <Tooltip :title="componentVariableTypes[canvasStore.selectedComponent.type]?.description">
+                  <div class="type-suffix">{{ config.suffix }}</div>
+                </Tooltip>
+              </div>
+            </template>
             <Input 
-              v-if="config.type === 'input'"
+              v-else-if="config.type === 'input'"
               v-model:value="canvasStore.selectedComponent.props[config.key]"
               @change="(e) => handleConfigChange(config.key, e.target.value)"
             />
@@ -149,6 +365,36 @@ const handleDeleteComponent = () => {
               style="width: 120px"
               @change="(value) => handleConfigChange(config.key, value)"
             />
+            <Switch
+              v-else-if="config.type === 'switch'"
+              v-model:checked="canvasStore.selectedComponent.props[config.key]"
+              @change="(value) => handleConfigChange(config.key, value)"
+            />
+            <TreeDataEditor
+              v-else-if="config.type === 'tree-data'"
+              v-model:value="canvasStore.selectedComponent.props[config.key]"
+              v-bind="config.treeConfig"
+              @update:value="(value) => handleConfigChange(config.key, value)"
+            />
+            <template v-else-if="config.type === 'prompt-input'">
+              <div class="prompt-input">
+                <Input.TextArea
+                  v-model:value="canvasStore.selectedComponent.props[config.key]"
+                  :placeholder="'请输入提示词，可以使用变量'"
+                  :rows="3"
+                  @change="(e) => handleConfigChange(config.key, e.target.value)"
+                />
+                <div class="prompt-tools">
+                  <VariableSelect
+                    :exclude-id="canvasStore.selectedComponent.id"
+                    @select="(value) => {
+                      const currentValue = canvasStore.selectedComponent.props[config.key] || ''
+                      handleConfigChange(config.key, currentValue + value)
+                    }"
+                  />
+                </div>
+              </div>
+            </template>
           </Form.Item>
           
           <Form.Item>
@@ -173,6 +419,36 @@ const handleDeleteComponent = () => {
   :deep(.ant-card) {
     height: 100%;
     overflow-y: auto;
+  }
+
+  .variable-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .ant-input {
+      width: 100%;
+    }
+
+    .type-suffix {
+      align-self: flex-start;
+      padding: 2px 8px;
+      background: #f5f5f5;
+      border: 1px solid #d9d9d9;
+      border-radius: 2px;
+      color: #666;
+      font-family: monospace;
+      font-size: 12px;
+      cursor: help;
+    }
+  }
+
+  .prompt-input {
+    .prompt-tools {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
   }
 }
 </style> 
