@@ -28,15 +28,18 @@ const components = [
         }
       },
       { 
-        name: '文本显示', 
+        name: '工作流显示', 
         type: 'text-display',
-        icon: 'font-size',
+        icon: 'FileTextOutlined',
         defaultProps: {
-          content: '示例文本',
+          content: '显示内容: {{output}}',
+          width: 400,
+          height: 300,
           fontSize: 14,
           align: 'left',
           fontWeight: 'normal',
-          editable: true
+          defaultWorkflow: '',
+          placeholder: '请配置工作流并输入显示模板'
         }
       },
       { 
@@ -54,7 +57,11 @@ const components = [
         icon: 'button',
         defaultProps: {
           type: 'primary',
-          children: '按钮'
+          children: '按钮',
+          size: 'middle',
+          width: 120,
+          workflowId: '',
+          workflowInputs: []
         }
       },
       { 
@@ -133,87 +140,17 @@ const components = [
         }
       }
     ]
-  },
-  {
-    title: '教育组件',
-    items: [
-      {
-        name: '知识点',
-        type: 'knowledge-point',
-        icon: 'book',
-        defaultProps: {
-          title: '知识点标题',
-          content: '知识点内容',
-          difficulty: 'medium'
-        }
-      },
-      {
-        name: '练习题',
-        type: 'exercise',
-        icon: 'edit',
-        defaultProps: {
-          question: '题目内容',
-          type: 'single',
-          options: [
-            { label: 'A', value: 'A', content: '选项A' },
-            { label: 'B', value: 'B', content: '选项B' }
-          ],
-          answer: 'A'
-        }
-      },
-      {
-        name: '解析',
-        type: 'explanation',
-        icon: 'solution',
-        defaultProps: {
-          content: '解析内容',
-          tips: '',
-          relatedPoints: []
-        }
-      },
-      {
-        name: '评分表',
-        type: 'rubric',
-        icon: 'table',
-        defaultProps: {
-          criteria: [
-            { name: '标准1', score: 10, description: '评分标准1的描述' }
-          ],
-          totalScore: 100
-        }
-      },
-      {
-        name: '课程目标',
-        type: 'learning-objective',
-        icon: 'flag',
-        defaultProps: {
-          objective: '学习目标内容',
-          category: 'knowledge',
-          level: 'basic'
-        }
-      },
-      {
-        name: '反馈表单',
-        type: 'feedback-form',
-        icon: 'form',
-        defaultProps: {
-          questions: [
-            { type: 'rating', title: '本节课程的总体评价' },
-            { type: 'text', title: '您的建议' }
-          ]
-        }
-      }
-    ]
   }
 ] as { title: string, items: ComponentItem[] }[]
 
 const handleDragStart = (e: DragEvent, item: ComponentItem) => {
   if (e.dataTransfer) {
-    e.dataTransfer.setData('application/json', JSON.stringify({
+    const componentData = {
       type: item.type,
       name: item.name,
       props: item.defaultProps
-    }))
+    }
+    e.dataTransfer.setData('text/plain', JSON.stringify(componentData))
   }
 }
 </script>

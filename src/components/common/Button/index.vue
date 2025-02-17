@@ -1,20 +1,107 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Button as AButton } from 'ant-design-vue'
+import { ref, computed } from 'vue'
+import { Button as AButton, message } from 'ant-design-vue'
 import type { ButtonProps } from './types'
+import { useCanvasStore } from '@/stores/canvas'
 
-const props = withDefaults(defineProps<ButtonProps>(), {
-  type: 'default',
+interface WorkflowInput {
+  key: string
+  value: string
+}
+
+interface Props {
+  type?: 'primary' | 'default' | 'dashed' | 'text' | 'link'
+  size?: 'large' | 'middle' | 'small'
+  children?: string
+  width?: number
+  workflowId?: string
+  workflowInputs?: WorkflowInput[]
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  type: 'primary',
   size: 'middle',
-  loading: false,
-  disabled: false,
-  width: 120
+  children: '按钮',
+  width: 120,
+  workflowId: '',
+  workflowInputs: () => []
 })
 
-const emit = defineEmits<{
-  click: [e: MouseEvent]
-  'update:width': [width: number]
-}>()
+const canvasStore = useCanvasStore()
+
+const buttonStyle = computed(() => ({
+  width: `${props.width}px`
+}))
+
+const handleClick = async () => {
+  if (!props.workflowId) {
+    message.warning('请先配置工作流')
+    return
+  }
+
+  try {
+    // 收集工作流输入变量
+    const inputs: Record<string, string> = {}
+    for (const input of props.workflowInputs || []) {
+      if (!input.key || !input.value) continue
+      
+      // 从画布中查找变量值
+      const sourceComponent = canvasStore.components.find(
+        comp => comp.props.variableName === input.value
+      )
+      
+      if (sourceComponent) {
+        // 获取组件的内容
+        const content = sourceComponent.props.content || sourceComponent.props.value || ''
+        inputs[input.key] = content
+      }
+    }
+
+    console.log('工作流输入:', inputs)
+
+    // 调用 Dify API
+    const baseUrl = import.meta.env.VITE_DIFY_BASE_URL || 'https://api.dify.ai/v1'
+    const apiKey = import.meta.env.VITE_DIFY_API_KEY || 'app-hdrNjAynLMRX93aP7ykyAUT0'
+
+    const response = await fetch(`${baseUrl}/chat-messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        inputs,
+        query: "请根据输入生成内容",
+        response_mode: "blocking",
+        user: "system"
+      })
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || '工作流执行失败')
+    }
+    
+    const result = await response.json()
+    
+    // 查找目标文本显示组件
+    const textDisplayComponents = canvasStore.components.filter(
+      comp => comp.type === 'text-display' && comp.props.defaultWorkflow === props.workflowId
+    )
+
+    // 更新文本显示组件的内容
+    if (textDisplayComponents.length > 0) {
+      const textDisplay = textDisplayComponents[0]
+      canvasStore.updateWorkflowOutput(textDisplay.id, result.answer)
+      message.success('内容已更新')
+    } else {
+      throw new Error('未找到匹配的文本显示组件')
+    }
+  } catch (err) {
+    console.error('执行错误:', err)
+    message.error(err instanceof Error ? err.message : '执行失败')
+  }
+}
 
 const buttonRef = ref<HTMLElement | null>(null)
 let startX = 0
@@ -57,7 +144,7 @@ const handleResizeEnd = () => {
   <div 
     ref="buttonRef"
     class="resizable-button"
-    :style="{ width: `${width}px` }"
+    :style="buttonStyle"
   >
     <AButton
       class="button"
@@ -66,7 +153,7 @@ const handleResizeEnd = () => {
       :loading="loading"
       :disabled="disabled"
       :icon="icon"
-      @click="emit('click', $event)"
+      @click="handleClick"
     >
       <slot>{{ children }}</slot>
     </AButton>

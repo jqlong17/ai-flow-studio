@@ -10,6 +10,7 @@ export interface CanvasComponent {
     x: number
     y: number
   }
+  workflowOutput?: string
 }
 
 export const useCanvasStore = defineStore('canvas', () => {
@@ -24,7 +25,8 @@ export const useCanvasStore = defineStore('canvas', () => {
     const id = `component-${Date.now()}`
     components.value.push({
       ...component,
-      id
+      id,
+      workflowOutput: ''
     })
     // 新添加的组件自动选中
     selectedId.value = id
@@ -36,6 +38,16 @@ export const useCanvasStore = defineStore('canvas', () => {
       components.value[index] = {
         ...components.value[index],
         ...updates
+      }
+    }
+  }
+  
+  const updateWorkflowOutput = (id: string, output: string) => {
+    const index = components.value.findIndex(c => c.id === id)
+    if (index > -1) {
+      components.value[index] = {
+        ...components.value[index],
+        workflowOutput: output
       }
     }
   }
@@ -60,6 +72,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     selectedComponent,
     addComponent,
     updateComponent,
+    updateWorkflowOutput,
     removeComponent,
     selectComponent
   }

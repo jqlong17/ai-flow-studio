@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Card, Empty, Form, Input, Select, Button, Space, InputNumber, Switch, Tooltip } from 'ant-design-vue'
+import { ref, computed, onMounted } from 'vue'
+import { Card, Empty, Form, Input, Select, Button, Space, InputNumber, Switch, Tooltip, message } from 'ant-design-vue'
 import type { TextArea } from 'ant-design-vue/es/input'
 import { useCanvasStore } from '@/stores/canvas'
 import TreeDataEditor from '../common/TreeDataEditor/index.vue'
 import VariableSelect from '../common/VariableSelect/index.vue'
 import { mockWorkflows } from '@/types/workflow'
+import WorkflowInputs from '../common/WorkflowInputs/index.vue'
 
 const canvasStore = useCanvasStore()
 const promptInputRef = ref<{
@@ -17,7 +18,7 @@ const promptInputRef = ref<{
 interface ConfigItem {
   key: string
   label: string
-  type: 'input' | 'select' | 'switch' | 'textarea' | 'options' | 'number' | 'tree-data' | 'input-group' | 'prompt-input'
+  type: 'input' | 'select' | 'switch' | 'textarea' | 'options' | 'number' | 'tree-data' | 'input-group' | 'prompt-input' | 'workflow-inputs'
   options?: { label: string; value: string | number }[]
   min?: number
   max?: number
@@ -75,6 +76,29 @@ const componentVariableTypes = {
   }
 } as const
 
+// 工作流选项
+const workflowOptions = ref([
+  { label: '测试工作流', value: 'app-hdrNjAynLMRX93aP7ykyAUT0' }
+])
+
+// 获取工作流列表
+const fetchWorkflows = async () => {
+  try {
+    // 这里可以调用 Dify API 获取工作流列表
+    // 或者从环境变量中读取预配置的工作流
+    const workflows = [
+      { label: '测试工作流', value: 'app-hdrNjAynLMRX93aP7ykyAUT0' },
+      { label: '教学设计工作流', value: 'app-teaching-design' },
+      { label: '知识点生成工作流', value: 'app-knowledge-points' },
+      { label: '练习题生成工作流', value: 'app-exercise-generator' }
+    ]
+    workflowOptions.value = workflows
+  } catch (err) {
+    console.error('获取工作流列表失败:', err)
+    message.error('获取工作流列表失败')
+  }
+}
+
 // 不同类型组件的配置项
 const configMap: Record<string, ConfigItem[]> = {
   'cascade-form': [
@@ -127,8 +151,15 @@ const configMap: Record<string, ConfigItem[]> = {
     },
     { 
       key: 'content', 
-      label: '文本内容', 
-      type: 'textarea' 
+      label: '显示模板', 
+      type: 'textarea',
+      description: '支持 Markdown 格式和变量插值 {{output}}，编辑后将显示在画布中'
+    },
+    {
+      key: 'defaultWorkflow',
+      label: '绑定工作流',
+      type: 'select',
+      options: workflowOptions
     },
     { 
       key: 'fontSize', 
@@ -157,6 +188,22 @@ const configMap: Record<string, ConfigItem[]> = {
         { label: '加粗', value: 'bold' },
         { label: '细体', value: 'lighter' }
       ]
+    },
+    {
+      key: 'width',
+      label: '宽度',
+      type: 'number',
+      min: 200,
+      max: 1200,
+      step: 10
+    },
+    {
+      key: 'height',
+      label: '高度',
+      type: 'number',
+      min: 100,
+      max: 800,
+      step: 10
     }
   ],
   'input': [
@@ -286,10 +333,13 @@ const configMap: Record<string, ConfigItem[]> = {
       key: 'workflowId',
       label: '触发工作流',
       type: 'select',
-      options: mockWorkflows.map(flow => ({
-        label: flow.name,
-        value: flow.id
-      }))
+      options: workflowOptions
+    },
+    {
+      key: 'workflowInputs',
+      label: '工作流输入',
+      type: 'workflow-inputs',
+      description: '配置要传递给工作流的输入变量'
     }
   ]
 }
@@ -314,6 +364,10 @@ const handleDeleteComponent = () => {
   if (!canvasStore.selectedComponent) return
   canvasStore.removeComponent(canvasStore.selectedComponent.id)
 }
+
+onMounted(() => {
+  fetchWorkflows()
+})
 </script>
 
 <template>
@@ -374,6 +428,12 @@ const handleDeleteComponent = () => {
               v-else-if="config.type === 'tree-data'"
               v-model:value="canvasStore.selectedComponent.props[config.key]"
               v-bind="config.treeConfig"
+              @update:value="(value) => handleConfigChange(config.key, value)"
+            />
+            <WorkflowInputs
+              v-else-if="config.type === 'workflow-inputs'"
+              v-model:value="canvasStore.selectedComponent.props[config.key]"
+              :exclude-id="canvasStore.selectedComponent.id"
               @update:value="(value) => handleConfigChange(config.key, value)"
             />
             <template v-else-if="config.type === 'prompt-input'">

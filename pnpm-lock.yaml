@@ -17,6 +17,9 @@ importers:
       ant-design-vue:
         specifier: ^4.0.0
         version: 4.2.6(vue@3.5.13(typescript@5.7.3))
+      md-editor-v3:
+        specifier: 2.11.3
+        version: 2.11.3(vue@3.5.13(typescript@5.7.3))
       pinia:
         specifier: ^2.1.6
         version: 2.3.1(typescript@5.7.3)(vue@3.5.13(typescript@5.7.3))
@@ -26,7 +29,7 @@ importers:
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^4.3.4
-        version: 4.6.2(vite@4.5.9(less@4.2.2))(vue@3.5.13(typescript@5.7.3))
+        version: 4.6.2(vite@4.5.9(@types/node@22.13.4)(less@4.2.2))(vue@3.5.13(typescript@5.7.3))
       less:
         specifier: ^4.2.0
         version: 4.2.2
@@ -35,7 +38,7 @@ importers:
         version: 5.7.3
       vite:
         specifier: ^4.4.9
-        version: 4.5.9(less@4.2.2)
+        version: 4.5.9(@types/node@22.13.4)(less@4.2.2)
       vue-tsc:
         specifier: ^1.8.11
         version: 1.8.27(typescript@5.7.3)
@@ -222,6 +225,9 @@ packages:
   '@simonwep/pickr@1.8.2':
     resolution: {integrity: sha512-/l5w8BIkrpP6n1xsetx9MWPWlU6OblN5YgZZphxan0Tq4BByTCETL6lyIeY8lagalS2Nbt4F2W034KHLIiunKA==}
 
+  '@types/node@22.13.4':
+    resolution: {integrity: sha512-ywP2X0DYtX3y08eFVx5fNIw7/uIv8hYUKgXoK8oayJlLnKcRfEYCxWMVE1XagUdVtCJlZT1AU4LXEABW+L1Peg==}
+
   '@types/web-bluetooth@0.0.20':
     resolution: {integrity: sha512-g9gZnnXVq7gM7v3tJCWV/qw7w+KeOlSHAhgF9RytFyifW6AF61hdT2ucrYhPq9hLs5JIryeupHV3qGk95dH9ow==}
 
@@ -404,6 +410,11 @@ packages:
     resolution: {integrity: sha512-LS9X+dc8KLxXCb8dni79fLIIUA5VyZoyjSMCwTluaXA0o27cCK0bhXkpgw+sTXVpPy/lSO57ilRixqk0vDmtRA==}
     engines: {node: '>=6'}
 
+  md-editor-v3@2.11.3:
+    resolution: {integrity: sha512-SCfS4qMy0HldFdplcIGUMCpSv8qkNWkYShSdv2gTHeViKduA34zV89BOrWcqls2EZSlvt2n3G7nHRzYUvJjDKw==}
+    peerDependencies:
+      vue: ^3.2.47
+
   mime@1.6.0:
     resolution: {integrity: sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==}
     engines: {node: '>=4'}
@@ -513,6 +524,9 @@ packages:
     resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  undici-types@6.20.0:
+    resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
 
   vite@4.5.9:
     resolution: {integrity: sha512-qK9W4xjgD3gXbC0NmdNFFnVFLMWSNiR3swj957yutwzzN16xF/E7nmtAyp1rT9hviDroQANjE4HK3H4WqWdFtw==}
@@ -689,11 +703,16 @@ snapshots:
       core-js: 3.40.0
       nanopop: 2.4.2
 
+  '@types/node@22.13.4':
+    dependencies:
+      undici-types: 6.20.0
+    optional: true
+
   '@types/web-bluetooth@0.0.20': {}
 
-  '@vitejs/plugin-vue@4.6.2(vite@4.5.9(less@4.2.2))(vue@3.5.13(typescript@5.7.3))':
+  '@vitejs/plugin-vue@4.6.2(vite@4.5.9(@types/node@22.13.4)(less@4.2.2))(vue@3.5.13(typescript@5.7.3))':
     dependencies:
-      vite: 4.5.9(less@4.2.2)
+      vite: 4.5.9(@types/node@22.13.4)(less@4.2.2)
       vue: 3.5.13(typescript@5.7.3)
 
   '@volar/language-core@1.11.1':
@@ -942,6 +961,10 @@ snapshots:
       semver: 5.7.2
     optional: true
 
+  md-editor-v3@2.11.3(vue@3.5.13(typescript@5.7.3)):
+    dependencies:
+      vue: 3.5.13(typescript@5.7.3)
+
   mime@1.6.0:
     optional: true
 
@@ -1027,12 +1050,16 @@ snapshots:
 
   typescript@5.7.3: {}
 
-  vite@4.5.9(less@4.2.2):
+  undici-types@6.20.0:
+    optional: true
+
+  vite@4.5.9(@types/node@22.13.4)(less@4.2.2):
     dependencies:
       esbuild: 0.18.20
       postcss: 8.5.2
       rollup: 3.29.5
     optionalDependencies:
+      '@types/node': 22.13.4
       fsevents: 2.3.3
       less: 4.2.2
 

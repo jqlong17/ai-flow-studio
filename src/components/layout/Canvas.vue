@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { 
   Card, 
   Input, 
@@ -11,14 +11,8 @@ import {
 import { useCanvasStore, type CanvasComponent } from '@/stores/canvas'
 import type { Component } from 'vue'
 
-// 导入教育组件
-import KnowledgePoint from '../education/KnowledgePoint.vue'
-import Exercise from '../education/Exercise.vue'
-import Explanation from '../education/Explanation.vue'
-import LearningObjective from '../education/LearningObjective.vue'
-import FeedbackForm from '../education/FeedbackForm.vue'
 // 导入通用组件
-import TextDisplay from '../common/Text/TextDisplay.vue'
+import TextContent from '../common/TextDisplay/TextContent.vue'
 import CascadeForm from '../common/CascadeForm/index.vue'
 import AICompletion from '../common/AICompletion/index.vue'
 import Button from '../common/Button/index.vue'
@@ -42,7 +36,7 @@ const handleDrop = (e: DragEvent) => {
   if (!e.dataTransfer) return
   
   try {
-    const data = JSON.parse(e.dataTransfer.getData('application/json'))
+    const data = JSON.parse(e.dataTransfer.getData('text/plain'))
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     
     canvasStore.addComponent({
@@ -142,13 +136,19 @@ const componentMap: Record<string, Component> = {
   'ai-completion': AICompletion,
   'ai-qa': Input,
   'ai-generator': TextArea,
-  'knowledge-point': KnowledgePoint,
-  'exercise': Exercise,
-  'explanation': Explanation,
-  'learning-objective': LearningObjective,
-  'feedback-form': FeedbackForm,
-  'text-display': TextDisplay,
+  'text-display': TextContent,
   'cascade-form': CascadeForm
+}
+
+// 添加新的键盘事件处理
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (canvasStore.selectedId) {
+      e.preventDefault() // 阻止默认行为
+      canvasStore.removeComponent(canvasStore.selectedId)
+      message.success('组件已删除')
+    }
+  }
 }
 </script>
 
@@ -158,6 +158,9 @@ const componentMap: Record<string, Component> = {
     @dragover="handleDragOver"
     @drop="handleDrop"
     @click="handleCanvasClick"
+    @keydown="handleKeyDown"
+    tabindex="-1"
+    ref="canvasRef"
   >
     <Card class="canvas-card">
       <div class="canvas-content">
@@ -165,6 +168,8 @@ const componentMap: Record<string, Component> = {
           <div
             v-for="component in canvasStore.components"
             :key="component.id"
+            :data-component-id="component.id"
+            :data-component-type="component.type"
             class="canvas-component"
             :class="{ 
               'is-selected': component.id === canvasStore.selectedId,
@@ -180,9 +185,14 @@ const componentMap: Record<string, Component> = {
             <component
               :is="componentMap[component.type]"
               v-bind="component.props"
+              :content="component.type === 'text-display' && component.workflowOutput ? 
+                component.props.content.replace(/\{\{output\}\}/g, component.workflowOutput) : 
+                component.props.content"
               @update:content="(value) => handlePropUpdate(component.id, 'content', value)"
               @update:fontSize="(value) => handlePropUpdate(component.id, 'fontSize', value)"
               @update:width="(value) => handlePropUpdate(component.id, 'width', value)"
+              @update:align="(value) => handlePropUpdate(component.id, 'align', value)"
+              @update:fontWeight="(value) => handlePropUpdate(component.id, 'fontWeight', value)"
             />
           </div>
         </template>
@@ -197,6 +207,12 @@ const componentMap: Record<string, Component> = {
 <style lang="less" scoped>
 .canvas-container {
   height: 100%;
+  outline: none;
+  position: relative;
+  
+  &:focus {
+    outline: none;
+  }
   
   .canvas-card {
     height: 100%;
@@ -227,6 +243,21 @@ const componentMap: Record<string, Component> = {
         
         &:hover {
           border-color: #40a9ff;
+        }
+
+        // 工作流显示组件的特殊样式
+        &[data-component-type="text-display"] {
+          background: transparent;
+          border: 2px dashed transparent;
+          
+          &:hover, &.is-selected {
+            border-color: #1890ff;
+            background: rgba(24, 144, 255, 0.02);
+          }
+          
+          &.is-dragging {
+            background: rgba(24, 144, 255, 0.05);
+          }
         }
       }
       
