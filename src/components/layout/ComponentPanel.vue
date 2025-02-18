@@ -188,6 +188,7 @@ const handleDragStart = (e: DragEvent, item: ComponentItem) => {
 <style lang="less" scoped>
 .component-panel {
   height: 100%;
+  border-right: 1px solid #f0f0f0;
   
   :deep(.ant-tabs) {
     height: 100%;
@@ -195,30 +196,52 @@ const handleDragStart = (e: DragEvent, item: ComponentItem) => {
     .ant-tabs-content {
       height: 100%;
       overflow-y: auto;
+      padding: 0 16px;
     }
   }
   
   .components-container {
-    padding: 12px;
+    padding: 16px 8px;
     
     .component-group {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      border: 1px solid #f0f0f0;
+      border-radius: 4px;
+      
+      :deep(.ant-card-head) {
+        min-height: 40px;
+        padding: 0 16px;
+        border-bottom: 1px solid #f0f0f0;
+        
+        .ant-card-head-title {
+          padding: 8px 0;
+          font-size: 14px;
+        }
+      }
+      
+      :deep(.ant-card-body) {
+        padding: 16px;
+      }
       
       .component-list {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        gap: 12px;
         
         .component-item {
-          padding: 8px;
+          padding: 10px 8px;
           border: 1px dashed #d9d9d9;
           border-radius: 4px;
-          text-align: center;
+          text-align: left;
+          padding-left: 16px;
           cursor: move;
+          font-size: 13px;
+          transition: all 0.3s;
           
           &:hover {
             border-color: #1890ff;
             color: #1890ff;
+            background: #f0f7ff;
           }
         }
       }

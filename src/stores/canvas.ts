@@ -28,7 +28,6 @@ export const useCanvasStore = defineStore('canvas', () => {
       id,
       workflowOutput: ''
     })
-    // 新添加的组件自动选中
     selectedId.value = id
   }
   

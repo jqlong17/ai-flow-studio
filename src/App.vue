@@ -15,7 +15,7 @@ const { Sider, Content } = Layout;
     <Content class="layout-content">
       <Canvas />
     </Content>
-    <Sider width="300" class="layout-sider right">
+    <Sider width="360" class="layout-sider right">
       <ConfigPanel />
     </Sider>
   </Layout>

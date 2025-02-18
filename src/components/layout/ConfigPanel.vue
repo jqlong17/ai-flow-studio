@@ -18,7 +18,7 @@ const promptInputRef = ref<{
 interface ConfigItem {
   key: string
   label: string
-  type: 'input' | 'select' | 'switch' | 'textarea' | 'options' | 'number' | 'tree-data' | 'input-group' | 'prompt-input' | 'workflow-inputs' | 'workflow-config'
+  type: 'input' | 'select' | 'switch' | 'textarea' | 'options' | 'number' | 'tree-data' | 'input-group' | 'prompt-input' | 'workflow-inputs' | 'workflow-config' | 'container'
   options?: { label: string; value: string | number }[]
   min?: number
   max?: number
@@ -509,40 +509,86 @@ onMounted(() => {
 <style lang="less" scoped>
 .config-panel {
   height: 100%;
-  padding: 12px;
+  border-left: 1px solid #f0f0f0;
   
   :deep(.ant-card) {
     height: 100%;
-    overflow-y: auto;
+    
+    .ant-card-head {
+      padding: 0 16px;
+      min-height: 48px;
+      border-bottom: 1px solid #f0f0f0;
+      
+      .ant-card-head-title {
+        padding: 12px 0;
+        font-size: 14px;
+        font-weight: 500;
+      }
+    }
+    
+    .ant-card-body {
+      height: calc(100% - 48px);
+      padding: 16px;
+      overflow-y: auto;
+    }
   }
+  
+  .ant-form {
+    .ant-form-item {
+      margin-bottom: 16px;
+      
+      .ant-form-item-label {
+        padding-bottom: 4px;
+        
+        label {
+          font-size: 13px;
+          color: #666;
+        }
+      }
+      
+      .ant-form-item-control-input {
+        min-height: 32px;
+      }
 
+      :deep(.ant-input-number) {
+        width: 100%;
+      }
+
+      :deep(.ant-select) {
+        width: 100%;
+      }
+    }
+  }
+  
   .variable-input-group {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-
+    align-items: center;
+    gap: 8px;
+    
     .ant-input {
-      width: 100%;
+      flex: 1;
+      min-width: 0;
     }
-
+    
     .type-suffix {
-      align-self: flex-start;
-      padding: 2px 8px;
+      padding: 4px 8px;
       background: #f5f5f5;
-      border: 1px solid #d9d9d9;
-      border-radius: 2px;
-      color: #666;
-      font-family: monospace;
+      border-radius: 4px;
       font-size: 12px;
-      cursor: help;
+      color: #666;
+      white-space: nowrap;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
-
+  
   .prompt-input {
     .prompt-tools {
       margin-top: 8px;
-      display: flex;
-      gap: 8px;
+      padding: 8px;
+      background: #f5f5f5;
+      border-radius: 4px;
     }
   }
 
@@ -572,6 +618,9 @@ onMounted(() => {
       .workflow-description {
         font-size: 12px;
         color: #999;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
   }
